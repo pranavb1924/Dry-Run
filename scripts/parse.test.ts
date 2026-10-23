@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parseAmount } from './parse.ts';
+import { parseAmount, parseDate } from './parse.ts';
 
 describe('parseAmount', () => {
   test('reads every plain amount shape in the files as integer cents', () => {
@@ -31,6 +31,44 @@ describe('parseAmount', () => {
   test('rejects any shape it does not recognize', () => {
     for (const text of ['', 'abc', '$1.00', '1,234.56', '.5', '--5', '$(-5.00)', '1.2.3']) {
       expect(() => parseAmount(text), text).toThrow('Unrecognized amount');
+    }
+  });
+});
+
+describe('parseDate', () => {
+  test('reads both day styles in the files', () => {
+    expect(parseDate('27-Feb-26')).toBe('2026-02-27');
+    expect(parseDate('5-Jul-25')).toBe('2025-07-05');
+  });
+
+  test('knows every month name', () => {
+    const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    expect(names.map((name) => parseDate(`1-${name}-26`))).toEqual([
+      '2026-01-01', '2026-02-01', '2026-03-01', '2026-04-01', '2026-05-01', '2026-06-01',
+      '2026-07-01', '2026-08-01', '2026-09-01', '2026-10-01', '2026-11-01', '2026-12-01',
+    ]);
+  });
+
+  test('knows which years are leap years', () => {
+    expect(parseDate('29-Feb-24')).toBe('2024-02-29');
+    expect(() => parseDate('29-Feb-26')).toThrow('No such date');
+  });
+
+  test('rejects dates that do not exist', () => {
+    for (const text of ['31-Feb-26', '31-Apr-26', '0-Jan-26', '32-Jan-26']) {
+      expect(() => parseDate(text), text).toThrow('No such date');
+    }
+  });
+
+  test('rejects month names it does not know', () => {
+    for (const text of ['27-FEB-26', '27-feb-26', '27-Foo-26']) {
+      expect(() => parseDate(text), text).toThrow('Unknown month');
+    }
+  });
+
+  test('rejects any shape it does not recognize', () => {
+    for (const text of ['', '27/02/26', '2026-02-27', '27-Feb-2026', '27-Sept-26', ' 27-Feb-26', '127-Feb-26']) {
+      expect(() => parseDate(text), text).toThrow('Unrecognized date');
     }
   });
 });

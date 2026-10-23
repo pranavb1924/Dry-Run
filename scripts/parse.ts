@@ -37,3 +37,38 @@ export function parseAmount(text: string): number {
   const cents = Number(dollars) * 100 + Number(decimals.slice(0, 2).padEnd(2, '0'));
   return sign * cents;
 }
+
+const MONTHS: readonly string[] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * Converts a date as the files write it (day, month name, two-digit year)
+ * to the standard YYYY-MM-DD form, which sorts correctly as text.
+ *
+ *   "27-Feb-26"  →  "2026-02-27"
+ *   "5-Jul-25"   →  "2025-07-05"    days below 10 have no leading zero
+ *
+ * Throws on any other shape, an unknown month name, or a date that doesn't
+ * exist, such as 31-Feb-26.
+ */
+export function parseDate(text: string): string {
+  if (!/^\d{1,2}-[A-Za-z]{3}-\d{2}$/.test(text)) {
+    throw new Error(`Unrecognized date: "${text}"`);
+  }
+
+  const [dayText = '', monthName = '', yearText = ''] = text.split('-');
+  const month = MONTHS.indexOf(monthName) + 1;
+  if (month === 0) {
+    throw new Error(`Unknown month in date: "${text}"`);
+  }
+  const year = 2000 + Number(yearText);
+  const day = Number(dayText);
+
+  // Let JavaScript's calendar decide which dates exist. Date.UTC quietly turns
+  // Feb 31 into Mar 3, so a date that comes back different didn't exist.
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+    throw new Error(`No such date: "${text}"`);
+  }
+
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
