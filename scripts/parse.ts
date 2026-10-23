@@ -120,3 +120,87 @@ export function splitLine(line: string): string[] {
   fields.push(field);
   return fields;
 }
+
+/** One transaction as the state recorded it, with every field trimmed. */
+export interface SourceRow {
+  /** Five digits. */
+  readonly agencyNumber: string;
+  readonly agencyName: string;
+  readonly lastName: string;
+  readonly firstInitial: string;
+  /** ITEM_DESCR. Often just "GENERAL PURCHASE". */
+  readonly description: string;
+  /** Negative for a refund. */
+  readonly amountCents: number;
+  readonly merchant: string;
+  /** MCC_DESCRIPTION, the merchant category. */
+  readonly mcc: string;
+  /** TRANSACTION_DATE as YYYY-MM-DD. */
+  readonly purchaseDate: string;
+}
+
+/**
+ * Reads the full text of one monthly file into rows, purchases outside our
+ * year included.
+ *
+ * Columns are found by name, because Jul–Sep 2025 add a ROWID column and
+ * April 2026 pads the AMOUNT header. Every field is trimmed: agency numbers
+ * often carry a leading space that would otherwise make each agency appear
+ * twice. Errors name the line they happened on.
+ */
+export function parseFile(text: string): SourceRow[] {
+  // The September 2026 file starts with an invisible byte order mark. The
+  // trim() of the header below would remove it too; this says so out loud.
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
+  if (lines.at(-1) === '') {
+    lines.pop();
+  }
+  const [headerLine = '', ...dataLines] = lines;
+  const header = splitLine(headerLine).map((name) => name.trim());
+
+  // Find every column up front, so a missing one fails before any row is read.
+  const index = (name: string): number => {
+    const i = header.indexOf(name);
+    if (i === -1) {
+      throw new Error(`Missing column: ${name}`);
+    }
+    return i;
+  };
+  const columns = {
+    agencyNumber: index('AGENCYNBR'),
+    agencyName: index('AGENCYNAME'),
+    lastName: index('LAST_NAME'),
+    firstInitial: index('FIRST_INITIAL'),
+    description: index('ITEM_DESCR'),
+    amount: index('AMOUNT'),
+    merchant: index('MERCHANT'),
+    mcc: index('MCC_DESCRIPTION'),
+    purchaseDate: index('TRANSACTION_DATE'),
+  };
+
+  return dataLines.map((line, i): SourceRow => {
+    try {
+      const fields = splitLine(line).map((field) => field.trim());
+      if (fields.length !== header.length) {
+        throw new Error(`Expected ${header.length} fields, found ${fields.length}`);
+      }
+      // The length check above means every column exists; ?? '' is only for TypeScript.
+      const get = (column: number): string => fields[column] ?? '';
+      return {
+        agencyNumber: get(columns.agencyNumber),
+        agencyName: get(columns.agencyName),
+        lastName: get(columns.lastName),
+        firstInitial: get(columns.firstInitial),
+        description: get(columns.description),
+        amountCents: parseAmount(get(columns.amount)),
+        merchant: get(columns.merchant),
+        mcc: get(columns.mcc),
+        purchaseDate: parseDate(get(columns.purchaseDate)),
+      };
+    } catch (error) {
+      // The header is line 1, so dataLines[i] is line i + 2.
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`line ${i + 2}: ${message}`, { cause: error });
+    }
+  });
+}
