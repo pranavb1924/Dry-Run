@@ -7,6 +7,7 @@
 Change a rule and instantly see what it would have flagged, how much spend it catches,<br>
 and how many approvals it puts on each manager's desk.
 
+[![CI](https://github.com/pranavb1924/Dry-Run/actions/workflows/ci.yml/badge.svg)](https://github.com/pranavb1924/Dry-Run/actions/workflows/ci.yml)
 ![status](https://img.shields.io/badge/status-in%20progress-f5a623)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![react](https://img.shields.io/badge/React-UI-61dafb)
@@ -98,6 +99,22 @@ Rule order never changes an outcome, and adding a rule can never make anything l
 - [ ] **Transactions table and approval-load chart.** A virtualized table showing why each transaction got its outcome
 - [ ] **Polish.** Web Worker, shareable links, undo and redo, mobile layout
 - [ ] **"Where should the limit be?"** Spend caught vs. approvals for every possible limit
+
+---
+
+## Run it locally
+
+Requires Node 22.12 or newer.
+
+```bash
+npm install
+npm run dev         # start the app at http://localhost:5173
+npm test            # run the tests and re-run them on every change
+npm run typecheck   # check types with strict TypeScript
+npm run build       # type-check, then build the site into dist/
+```
+
+Every pull request and every push to `main` runs the type-check, the tests and the build in [GitHub Actions](.github/workflows/ci.yml).
 
 ---
 
