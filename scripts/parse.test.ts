@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parseAmount, parseDate } from './parse.ts';
+import { parseAmount, parseDate, splitLine } from './parse.ts';
 
 describe('parseAmount', () => {
   test('reads every plain amount shape in the files as integer cents', () => {
@@ -70,5 +70,39 @@ describe('parseDate', () => {
     for (const text of ['', '27/02/26', '2026-02-27', '27-Feb-2026', '27-Sept-26', ' 27-Feb-26', '127-Feb-26']) {
       expect(() => parseDate(text), text).toThrow('Unrecognized date');
     }
+  });
+});
+
+describe('splitLine', () => {
+  test('splits a plain line at its commas', () => {
+    expect(splitLine('a,b,c')).toEqual(['a', 'b', 'c']);
+  });
+
+  test('keeps a comma inside quotes as part of the field and drops the quotes', () => {
+    expect(splitLine('GENERAL PURCHASE," $(1,234.56)",OFFICE DEPOT')).toEqual([
+      'GENERAL PURCHASE',
+      ' $(1,234.56)',
+      'OFFICE DEPOT',
+    ]);
+    expect(splitLine('"1,2",b')).toEqual(['1,2', 'b']);
+    expect(splitLine('a,"1,2"')).toEqual(['a', '1,2']);
+  });
+
+  test('keeps empty fields', () => {
+    expect(splitLine('a,,b')).toEqual(['a', '', 'b']);
+    expect(splitLine('a,b,')).toEqual(['a', 'b', '']);
+  });
+
+  test('rejects a quote in the middle of a field', () => {
+    expect(() => splitLine('a,b"c')).toThrow('Quote in the middle of a field');
+  });
+
+  test('rejects text after a closing quote, including a doubled quote', () => {
+    expect(() => splitLine('"1,2"x,b')).toThrow('Text after a closing quote');
+    expect(() => splitLine('"12"" pipe",b')).toThrow('Text after a closing quote');
+  });
+
+  test('rejects a line that ends inside quotes', () => {
+    expect(() => splitLine('a,"1,2')).toThrow('Line ends inside quotes');
   });
 });

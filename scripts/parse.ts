@@ -72,3 +72,51 @@ export function parseDate(text: string): string {
 
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
+
+/**
+ * Splits one line of a file, with its line ending already removed, into
+ * its fields.
+ *
+ *   'a,"1,2",b'  →  ['a', '1,2', 'b']
+ *
+ * In these files quotes only ever wrap a whole field: the 58 April refunds
+ * of $1,000 or more, like " $(1,234.56)". The full CSV standard also allows
+ * doubled quotes and line breaks inside a quoted field. The files never use
+ * them, so any other quote throws instead of being guessed at.
+ */
+export function splitLine(line: string): string[] {
+  const fields: string[] = [];
+  let field = '';
+  // Where we are in the current field. After a closing quote, only a comma
+  // or the end of the line may come.
+  let state: 'unquoted' | 'quoted' | 'closed' = 'unquoted';
+
+  for (const char of line) {
+    if (state === 'quoted') {
+      if (char === '"') {
+        state = 'closed';
+      } else {
+        field += char;
+      }
+    } else if (char === ',') {
+      fields.push(field);
+      field = '';
+      state = 'unquoted';
+    } else if (state === 'closed') {
+      throw new Error(`Text after a closing quote: ${line}`);
+    } else if (char === '"') {
+      if (field !== '') {
+        throw new Error(`Quote in the middle of a field: ${line}`);
+      }
+      state = 'quoted';
+    } else {
+      field += char;
+    }
+  }
+
+  if (state === 'quoted') {
+    throw new Error(`Line ends inside quotes: ${line}`);
+  }
+  fields.push(field);
+  return fields;
+}
