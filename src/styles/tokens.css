@@ -1,0 +1,123 @@
+/* Design tokens: every color, radius and shadow the page uses. Components
+   refer to these roles, never to raw values. */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --page: #f7f7f5;
+  --surface: #ffffff;
+  --surface-hover: #f8f8f6;
+  --surface-sunken: #f2f2ef;
+  --surface-inverse: #0b0b0b;
+
+  /* Ink */
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --ink-3: #6f6d66;
+  --ink-inverse: #ffffff;
+  --ink-inverse-2: #b9b8b1;
+
+  /* Lines */
+  --line: #e8e7e2;
+  --line-strong: #d6d5cf;
+  --grid: #eeede8;
+
+  /* The one accent: interface highlights only, always with ink on top. */
+  --accent: #d9f24f;
+  --accent-soft: #f4fbd2;
+  --accent-wash: rgba(217, 242, 79, 0.42);
+
+  /* Policies in charts: emphasis on the proposal, the current policy in gray. */
+  --proposed: #0b0b0b;
+  --current: #8f8d86;
+  --current-soft: #d6d5ce;
+
+  /* Outcome levels: one hue, light to dark, by strictness. */
+  --level-0: #e3e2dc;
+  --level-1: #86b6ef;
+  --level-2: #3987e5;
+  --level-3: #1c5cab;
+  --level-4: #0d366b;
+
+  /* Direction of a change: more control reads good, more friction reads as a cost. */
+  --good: #067647;
+  --cost: #b54708;
+
+  --radius-s: 6px;
+  --radius: 10px;
+  --radius-l: 14px;
+  --shadow-pop: 0 16px 40px rgba(11, 11, 11, 0.14), 0 2px 6px rgba(11, 11, 11, 0.06);
+  --shadow-drawer: -24px 0 60px rgba(11, 11, 11, 0.12);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-optical-sizing: auto;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

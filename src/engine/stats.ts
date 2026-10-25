@@ -2,7 +2,9 @@
 // a policy controls, and how much work it creates for approvers, per week and
 // per department.
 
+import { NO_RULE } from './evaluate.ts';
 import type { Evaluation } from './evaluate.ts';
+import { MAX_RULES } from './policy.ts';
 import { WEEKS } from './prepare.ts';
 import type { EngineData } from './prepare.ts';
 
@@ -21,6 +23,9 @@ export interface Stats {
   readonly categorySpend: Float64Array;
   /** Cardholders with at least one purchase held for approval or blocked. */
   readonly cardholdersAffected: number;
+  /** For each rule position, the transactions it decided and their spend in cents. */
+  readonly ruleCount: Float64Array;
+  readonly ruleSpend: Float64Array;
 }
 
 export function summarize(data: EngineData, evaluation: Evaluation): Stats {
@@ -33,7 +38,9 @@ export function summarize(data: EngineData, evaluation: Evaluation): Stats {
   const departmentWeekly = new Float64Array(departments * WEEKS);
   const categorySpend = new Float64Array(dataset.categories.length);
   const affected = new Uint8Array(dataset.cardholders.length);
-  const { level } = evaluation;
+  const ruleCount = new Float64Array(MAX_RULES);
+  const ruleSpend = new Float64Array(MAX_RULES);
+  const { level, rule } = evaluation;
 
   for (let i = 0; i < t.count; i++) {
     const l = level[i]!;
@@ -44,6 +51,11 @@ export function summarize(data: EngineData, evaluation: Evaluation): Stats {
     }
     if (l === 0) {
       continue;
+    }
+    const r = rule[i]!;
+    if (r !== NO_RULE) {
+      ruleCount[r]!++;
+      ruleSpend[r]! += amount;
     }
     categorySpend[t.category[i]!]! += amount;
     if (l >= 2) {
@@ -72,7 +84,17 @@ export function summarize(data: EngineData, evaluation: Evaluation): Stats {
     cardholdersAffected += a;
   }
 
-  return { count, spend, weeklyApprovals, departmentApprovals, departmentPeak, categorySpend, cardholdersAffected };
+  return {
+    count,
+    spend,
+    weeklyApprovals,
+    departmentApprovals,
+    departmentPeak,
+    categorySpend,
+    cardholdersAffected,
+    ruleCount,
+    ruleSpend,
+  };
 }
 
 export interface Change {

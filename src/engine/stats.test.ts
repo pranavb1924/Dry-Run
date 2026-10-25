@@ -41,6 +41,11 @@ describe('summarize', () => {
   test('counts cardholders held for approval or blocked, not those only flagged', () => {
     expect(stats.cardholdersAffected).toBe(2);
   });
+
+  test('counts what each rule decided', () => {
+    expect([...stats.ruleCount.slice(0, 3)]).toEqual([3, 1, 1]);
+    expect([...stats.ruleSpend.slice(0, 3)]).toEqual([120_000, 900_000, 2_000]);
+  });
 });
 
 describe('compare', () => {
