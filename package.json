@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "typecheck": "tsc && tsc -p scripts",
-    "data:download": "node --experimental-strip-types scripts/download.ts"
+    "data:download": "node --experimental-strip-types scripts/download.ts",
+    "data:import": "node --experimental-strip-types scripts/import.ts"
   },
   "dependencies": {
     "react": "19.3.0",
